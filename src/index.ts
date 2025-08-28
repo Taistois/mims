@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import authRoutes from "./routes/auth.js";
 
 dotenv.config();
 
@@ -12,6 +13,7 @@ const PORT = process.env.PORT || 5000;
 
 app.get("/", (req, res) => {
   res.send("MIMS Backend Running 🚀");
+  app.use("/auth", authRoutes);
 });
 
 app.listen(PORT, () => {
