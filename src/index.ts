@@ -2,7 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import authRoutes from "./routes/auth.js";
-import { authenticateToken } from "./middleware/authMiddleware.js";
+import { verifyToken } from "./middleware/authMiddleware.js";
+import { verifyRole } from "./middleware/roleMiddleware.js"
 
 dotenv.config();
 
@@ -12,17 +13,37 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
 
-// Root test route
+// Root route
 app.get("/", (req, res) => {
   res.send("MIMS Backend Running 🚀");
 });
 
-// ✅ Mount auth routes properly
+// Auth routes
 app.use("/auth", authRoutes);
 
-app.get("/dashboard", authenticateToken, (req, res) => {
-  res.json({ message: "Welcome to the protected dashboard ✅", user: (req as any).user });
+// ✅ Protected dashboard route
+app.get("/dashboard", verifyToken, (req, res) => {
+  res.json({
+    message: "Welcome to the protected dashboard ✅",
+    user: (req as any).user,
+  });
 });
+
+// ✅ Admin-only route
+app.get("/admin", verifyToken, verifyRole(["admin"]), (req, res) => {
+  res.json({ message: "Welcome Admin 👑", user: (req as any).user });
+});
+
+// ✅ Insurance staff-only route
+app.get("/staff", verifyToken, verifyRole(["insurance_staff"]), (req, res) => {
+  res.json({ message: "Welcome Insurance Staff 📋", user: (req as any).user });
+});
+
+// ✅ Member-only route
+app.get("/member", verifyToken, verifyRole(["member"]), (req, res) => {
+  res.json({ message: "Welcome Member 🙋", user: (req as any).user });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
