@@ -4,12 +4,15 @@ import cors from "cors";
 import authRoutes from "./routes/auth.js";
 import { verifyToken } from "./middleware/authMiddleware.js";
 import { verifyRole } from "./middleware/roleMiddleware.js"
+import memberRoutes from "./routes/members.js";
+import policyRoutes from "./routes/policies.js";
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
 
 const PORT = process.env.PORT || 5000;
 
@@ -20,6 +23,8 @@ app.get("/", (req, res) => {
 
 // Auth routes
 app.use("/auth", authRoutes);
+app.use("/members", memberRoutes);
+app.use("/policies", policyRoutes);
 
 // ✅ Protected dashboard route
 app.get("/dashboard", verifyToken, (req, res) => {
