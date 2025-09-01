@@ -6,6 +6,10 @@ import { verifyToken } from "./middleware/authMiddleware.js";
 import { verifyRole } from "./middleware/roleMiddleware.js"
 import memberRoutes from "./routes/members.js";
 import policyRoutes from "./routes/policies.js";
+import claimRoutes from "./routes/claims.js";
+import paymentRoutes from "./routes/payments.js";
+import loanRoutes from "./routes/loans.js";
+import repaymentRoutes from "./routes/repayments.js";
 
 dotenv.config();
 
@@ -25,6 +29,10 @@ app.get("/", (req, res) => {
 app.use("/auth", authRoutes);
 app.use("/members", memberRoutes);
 app.use("/policies", policyRoutes);
+app.use("/claims", claimRoutes);
+app.use("/payments", paymentRoutes);
+app.use("/loans", loanRoutes);
+app.use("/repayments", repaymentRoutes);
 
 // ✅ Protected dashboard route
 app.get("/dashboard", verifyToken, (req, res) => {
