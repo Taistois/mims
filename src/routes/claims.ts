@@ -1,13 +1,18 @@
 import { Router } from "express";
 import pool from "../config/db.js";
-import { verifyToken } from "../middleware/authMiddleware.js";
+import { verifyToken, authorizeRoles } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
-// Update claim status (admin/staff only)
-router.put("/:id", verifyToken, async (req, res) => {
+/**
+ * ================================
+ * UPDATE CLAIM STATUS
+ * ================================
+ * Only admin and insurance staff can update claim statuses
+ */
+router.put("/:id", verifyToken, authorizeRoles("admin", "insurance_staff"), async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body; // ✅ use "status" not "claim_status"
+  const { status } = req.body; // ✅ must send { "status": "approved" } or similar
 
   try {
     const result = await pool.query(

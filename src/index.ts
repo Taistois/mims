@@ -10,6 +10,7 @@ import claimRoutes from "./routes/claims.js";
 import paymentRoutes from "./routes/payments.js";
 import loanRoutes from "./routes/loans.js";
 import repaymentRoutes from "./routes/repayments.js";
+import reportRoutes from "./routes/reports.js";
 
 dotenv.config();
 
@@ -33,6 +34,7 @@ app.use("/claims", claimRoutes);
 app.use("/payments", paymentRoutes);
 app.use("/loans", loanRoutes);
 app.use("/repayments", repaymentRoutes);
+app.use("/reports", reportRoutes);
 
 // ✅ Protected dashboard route
 app.get("/dashboard", verifyToken, (req, res) => {

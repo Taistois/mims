@@ -2,13 +2,17 @@ import { Router } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import pool from "../config/db.js";
+import { verifyToken, authorizeRoles } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
 /**
- * REGISTER
+ * ================================
+ * REGISTER USER (Admin Only)
+ * ================================
+ * Only admins can register new users
  */
-router.post("/register", async (req, res) => {
+router.post("/register", verifyToken, authorizeRoles("admin"), async (req, res) => {
   const { name, email, phone, password, role } = req.body;
 
   try {
@@ -40,17 +44,16 @@ router.post("/register", async (req, res) => {
 });
 
 /**
+ * ================================
  * LOGIN
+ * ================================
+ * Login to get JWT token
  */
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // check if user exists
-    const result = await pool.query(
-      "SELECT * FROM users WHERE email = $1",
-      [email]
-    );
+    const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
 
     if (result.rows.length === 0) {
       return res.status(400).json({ error: "Invalid email or password ❌" });
@@ -58,13 +61,13 @@ router.post("/login", async (req, res) => {
 
     const user = result.rows[0];
 
-    // compare password
+    // verify password
     const validPassword = await bcrypt.compare(password, user.password_hash);
     if (!validPassword) {
       return res.status(400).json({ error: "Invalid email or password ❌" });
     }
 
-    // generate JWT
+    // generate token
     const token = jwt.sign(
       { user_id: user.user_id, role: user.role },
       process.env.JWT_SECRET || "supersecretkey",
@@ -80,12 +83,51 @@ router.post("/login", async (req, res) => {
         email: user.email,
         phone: user.phone,
         role: user.role,
-      }
+      },
     });
-
   } catch (err) {
     console.error("Login Error:", err);
     res.status(500).json({ error: "Login failed ❌" });
+  }
+});
+
+/**
+ * ================================
+ * GET ALL USERS (Admin Only)
+ * ================================
+ */
+router.get("/users", verifyToken, authorizeRoles("admin"), async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT user_id, name, email, phone, role, created_at FROM users"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Fetch Users Error:", err);
+    res.status(500).json({ error: "Failed to fetch users ❌" });
+  }
+});
+
+/**
+ * ================================
+ * DELETE USER (Admin Only)
+ * ================================
+ */
+router.delete("/users/:id", verifyToken, authorizeRoles("admin"), async (req, res) => {
+  try {
+    const result = await pool.query(
+      "DELETE FROM users WHERE user_id = $1 RETURNING *",
+      [req.params.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "User not found ❌" });
+    }
+
+    res.json({ message: "User deleted ✅" });
+  } catch (err) {
+    console.error("Delete User Error:", err);
+    res.status(500).json({ error: "Failed to delete user ❌" });
   }
 });
 

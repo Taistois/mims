@@ -1,14 +1,16 @@
 import { Router } from "express";
 import pool from "../config/db.js";
-import { verifyToken } from "../middleware/authMiddleware.js";
-import { verifyRole } from "../middleware/roleMiddleware.js";
+import { verifyToken, authorizeRoles } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
 /**
- * Add new member (only insurance staff or admin can do this)
+ * ===========================================
+ * ADD NEW MEMBER
+ * ===========================================
+ * Roles Allowed: insurance_staff, admin
  */
-router.post("/", verifyToken, verifyRole(["insurance_staff", "admin"]), async (req, res) => {
+router.post("/", verifyToken, authorizeRoles("insurance_staff", "admin"), async (req, res) => {
   const { user_id, national_id, address, date_of_birth } = req.body;
 
   try {
@@ -25,9 +27,12 @@ router.post("/", verifyToken, verifyRole(["insurance_staff", "admin"]), async (r
 });
 
 /**
- * Get all members (only staff/admin)
+ * ===========================================
+ * GET ALL MEMBERS
+ * ===========================================
+ * Roles Allowed: insurance_staff, admin
  */
-router.get("/", verifyToken, verifyRole(["insurance_staff", "admin"]), async (req, res) => {
+router.get("/", verifyToken, authorizeRoles("insurance_staff", "admin"), async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT m.*, u.name, u.email, u.phone, u.role 
@@ -42,7 +47,11 @@ router.get("/", verifyToken, verifyRole(["insurance_staff", "admin"]), async (re
 });
 
 /**
- * Get single member by ID (member can view their own, staff/admin can view any)
+ * ===========================================
+ * GET SINGLE MEMBER BY ID
+ * ===========================================
+ * - Staff/Admin can view any member
+ * - Members can only view their own record
  */
 router.get("/:id", verifyToken, async (req, res) => {
   const memberId = req.params.id;
@@ -63,7 +72,7 @@ router.get("/:id", verifyToken, async (req, res) => {
 
     const member = result.rows[0];
 
-    // If user is a member, they can only view their own profile
+    // Restrict members to only view their own data
     if (user.role === "member" && member.user_id !== user.user_id) {
       return res.status(403).json({ error: "Forbidden: Cannot view other member’s data 🚫" });
     }
@@ -76,15 +85,19 @@ router.get("/:id", verifyToken, async (req, res) => {
 });
 
 /**
- * Update member (staff/admin only)
+ * ===========================================
+ * UPDATE MEMBER
+ * ===========================================
+ * Roles Allowed: insurance_staff, admin
  */
-router.put("/:id", verifyToken, verifyRole(["insurance_staff", "admin"]), async (req, res) => {
+router.put("/:id", verifyToken, authorizeRoles("insurance_staff", "admin"), async (req, res) => {
   const memberId = req.params.id;
   const { address, date_of_birth } = req.body;
 
   try {
     const result = await pool.query(
-      `UPDATE members SET address=$1, date_of_birth=$2 
+      `UPDATE members 
+       SET address=$1, date_of_birth=$2 
        WHERE member_id=$3 RETURNING *`,
       [address, date_of_birth, memberId]
     );
@@ -101,9 +114,12 @@ router.put("/:id", verifyToken, verifyRole(["insurance_staff", "admin"]), async 
 });
 
 /**
- * Delete member (admin only)
+ * ===========================================
+ * DELETE MEMBER
+ * ===========================================
+ * Roles Allowed: admin only
  */
-router.delete("/:id", verifyToken, verifyRole(["admin"]), async (req, res) => {
+router.delete("/:id", verifyToken, authorizeRoles("admin"), async (req, res) => {
   const memberId = req.params.id;
 
   try {
