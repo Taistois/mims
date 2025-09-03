@@ -6,7 +6,7 @@ const router = Router();
 
 /**
  * ===========================================
- * RECORD A REPAYMENT
+ * RECORD A REPAYMENT + NOTIFICATION
  * ===========================================
  * Roles allowed: admin, insurance_staff
  */
@@ -18,43 +18,65 @@ router.post(
     const { loan_id, amount, method } = req.body;
 
     try {
-      // Check if loan exists
+      // 1️⃣ Check if loan exists
       const loanResult = await pool.query(
-        "SELECT * FROM loans WHERE loan_id = $1",
+        `SELECT l.*, m.user_id, u.name, u.email
+         FROM loans l
+         JOIN members m ON l.member_id = m.member_id
+         JOIN users u ON m.user_id = u.user_id
+         WHERE l.loan_id = $1`,
         [loan_id]
       );
+
       if (loanResult.rows.length === 0) {
         return res.status(404).json({ error: "Loan not found ❌" });
       }
 
-      // Insert repayment as a payment record
+      const loanData = loanResult.rows[0];
+
+      // 2️⃣ Insert repayment into payments table
       const paymentResult = await pool.query(
         `INSERT INTO payments (loan_id, amount, method, status) 
          VALUES ($1, $2, $3, 'success') RETURNING *`,
         [loan_id, amount, method]
       );
 
-      // Check total repaid vs loan amount
+      // 3️⃣ Calculate total repaid
       const totalPaidResult = await pool.query(
         "SELECT SUM(amount) AS total_paid FROM payments WHERE loan_id = $1",
         [loan_id]
       );
 
       const totalPaid = totalPaidResult.rows[0].total_paid || 0;
-      const loanAmount = loanResult.rows[0].amount;
+      const loanAmount = loanData.amount;
 
-      // If fully repaid, update loan status
+      // 4️⃣ If fully repaid, update loan status
+      let updatedLoanStatus = loanData.status;
       if (parseFloat(totalPaid) >= parseFloat(loanAmount)) {
+        updatedLoanStatus = "repaid";
         await pool.query(
           "UPDATE loans SET status = 'repaid' WHERE loan_id = $1",
           [loan_id]
         );
       }
 
+      // 5️⃣ Create notification for the member
+      await pool.query(
+        `INSERT INTO notifications (user_id, title, message) 
+         VALUES ($1, $2, $3)`,
+        [
+          loanData.user_id,
+          "Loan Repayment Update",
+          `Dear ${loanData.name}, a repayment of ${amount} has been recorded for your loan (ID: ${loan_id}). 
+           Total paid so far: ${totalPaid}. ${updatedLoanStatus === "repaid" ? "Your loan is now fully repaid! 🎉" : ""}`
+        ]
+      );
+
       res.json({
         message: "Repayment recorded ✅",
         repayment: paymentResult.rows[0],
         totalPaid,
+        loanStatus: updatedLoanStatus
       });
     } catch (err) {
       console.error("Repayment Error:", err);
@@ -68,7 +90,7 @@ router.post(
  * GET ALL REPAYMENTS FOR A LOAN
  * ===========================================
  * - Admin and staff → see all repayments
- * - Members → only see repayments for their own loan
+ * - Members → only see repayments for their own loans
  */
 router.get("/:loan_id", verifyToken, async (req, res) => {
   const { loan_id } = req.params;
@@ -85,7 +107,7 @@ router.get("/:loan_id", verifyToken, async (req, res) => {
     `;
     let params: any[] = [loan_id];
 
-    // If user is a member, restrict to their loans
+    // Restrict members to their own loans
     if (user.role === "member") {
       query += " AND m.user_id = $2";
       params.push(user.user_id);

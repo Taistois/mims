@@ -6,7 +6,7 @@ const router = Router();
 
 /**
  * ================================
- * CREATE LOAN
+ * CREATE LOAN + NOTIFY MEMBER
  * ================================
  * Only admin and insurance staff can issue loans
  */
@@ -24,7 +24,33 @@ router.post("/", verifyToken, authorizeRoles("admin", "insurance_staff"), async 
       [member_id, amount, interest_rate, duration, dueDate]
     );
 
-    res.json({ message: "Loan issued ✅", loan: result.rows[0] });
+    const newLoan = result.rows[0];
+
+    // 🔹 Get the user_id for this member
+    const memberResult = await pool.query(
+      `SELECT u.user_id, u.name 
+       FROM members m 
+       JOIN users u ON m.user_id = u.user_id 
+       WHERE m.member_id = $1`,
+      [member_id]
+    );
+
+    if (memberResult.rows.length > 0) {
+      const user = memberResult.rows[0];
+
+      // 🔹 Create a notification for the member
+      await pool.query(
+        `INSERT INTO notifications (user_id, title, message) 
+         VALUES ($1, $2, $3)`,
+        [
+          user.user_id,
+          "Loan Request Submitted",
+          `Hello ${user.name}, your loan request for amount ${amount} has been submitted and is pending approval.`
+        ]
+      );
+    }
+
+    res.json({ message: "Loan issued ✅", loan: newLoan });
   } catch (err) {
     console.error("Loan Create Error:", err);
     res.status(500).json({ error: "Failed to issue loan ❌" });
@@ -84,7 +110,7 @@ router.get("/:id", verifyToken, async (req, res) => {
 
 /**
  * ================================
- * UPDATE LOAN STATUS
+ * UPDATE LOAN STATUS + NOTIFY MEMBER
  * ================================
  * Only admin and insurance staff can approve, mark repaid, or default loans
  */
@@ -92,6 +118,7 @@ router.put("/:id/status", verifyToken, authorizeRoles("admin", "insurance_staff"
   const { status } = req.body;
 
   try {
+    // 1️⃣ Update loan
     const result = await pool.query(
       `UPDATE loans SET status = $1 WHERE loan_id = $2 RETURNING *`,
       [status, req.params.id]
@@ -100,7 +127,40 @@ router.put("/:id/status", verifyToken, authorizeRoles("admin", "insurance_staff"
     if (result.rows.length === 0)
       return res.status(404).json({ error: "Loan not found ❌" });
 
-    res.json({ message: "Loan updated ✅", loan: result.rows[0] });
+    const updatedLoan = result.rows[0];
+
+    // 2️⃣ Find loan owner to send notification
+    const ownerResult = await pool.query(
+      `SELECT u.user_id, u.name 
+       FROM loans l
+       JOIN members m ON l.member_id = m.member_id
+       JOIN users u ON m.user_id = u.user_id
+       WHERE l.loan_id = $1`,
+      [req.params.id]
+    );
+
+    if (ownerResult.rows.length > 0) {
+      const user = ownerResult.rows[0];
+      let notificationMessage = "";
+
+      if (status === "approved") {
+        notificationMessage = `Hello ${user.name}, your loan with ID ${req.params.id} has been approved.`;
+      } else if (status === "repaid") {
+        notificationMessage = `Hello ${user.name}, your loan with ID ${req.params.id} has been fully repaid.`;
+      } else if (status === "defaulted") {
+        notificationMessage = `Hello ${user.name}, your loan with ID ${req.params.id} has been marked as defaulted.`;
+      }
+
+      if (notificationMessage) {
+        await pool.query(
+          `INSERT INTO notifications (user_id, title, message) 
+           VALUES ($1, $2, $3)`,
+          [user.user_id, "Loan Status Update", notificationMessage]
+        );
+      }
+    }
+
+    res.json({ message: "Loan updated ✅", loan: updatedLoan });
   } catch (err) {
     console.error("Update Loan Error:", err);
     res.status(500).json({ error: "Failed to update loan ❌" });
