@@ -8,7 +8,7 @@ describe("Repayments Module", () => {
   // login before running repayment tests
   beforeAll(async () => {
     const res = await request(app)
-      .post("/api/auth/login")
+      .post("/auth/login")
       .send({
         email: "admin@mims.com", // test admin credentials
         password: "admin123",
@@ -21,7 +21,7 @@ describe("Repayments Module", () => {
 
   it("should record a repayment", async () => {
     const res = await request(app)
-      .post("/api/repayments")
+      .post("/repayments")
       .set("Authorization", `Bearer ${token}`)
       .send({
         loan_id: 1,
@@ -35,7 +35,7 @@ describe("Repayments Module", () => {
 
   it("should fetch repayments for a loan", async () => {
     const res = await request(app)
-      .get("/api/repayments/1")
+      .get("/repayments/1")
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(200);

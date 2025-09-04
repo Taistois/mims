@@ -8,7 +8,7 @@ describe("Payments Module", () => {
   // login before running payments tests
   beforeAll(async () => {
     const res = await request(app)
-      .post("/api/auth/login")
+      .post("/auth/login")
       .send({
         email: "admin@mims.com", // your test admin credentials
         password: "admin123",
@@ -21,7 +21,7 @@ describe("Payments Module", () => {
 
   it("should record a payment", async () => {
     const res = await request(app)
-      .post("/api/payments")
+      .post("/payments")
       .set("Authorization", `Bearer ${token}`)
       .send({
         claim_id: 1,
@@ -35,7 +35,7 @@ describe("Payments Module", () => {
 
   it("should fetch all payments", async () => {
     const res = await request(app)
-      .get("/api/payments")
+      .get("/payments")
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(200);

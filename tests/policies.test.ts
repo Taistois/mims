@@ -9,7 +9,7 @@ describe("Policies Module", () => {
   // login before running policy tests
   beforeAll(async () => {
     const res = await request(app)
-      .post("/api/auth/login")
+      .post("/auth/login")
       .send({
         email: "admin@mims.com", // test admin credentials
         password: "admin123",
@@ -22,7 +22,7 @@ describe("Policies Module", () => {
 
   it("should create a new policy", async () => {
     const res = await request(app)
-      .post("/api/policies")
+      .post("/policies")
       .set("Authorization", `Bearer ${token}`)
       .send({
         member_id: 1,
@@ -40,7 +40,7 @@ describe("Policies Module", () => {
 
   it("should fetch all policies", async () => {
     const res = await request(app)
-      .get("/api/policies")
+      .get("/policies")
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(200);

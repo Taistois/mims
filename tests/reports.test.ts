@@ -8,7 +8,7 @@ describe("Reports Module", () => {
   // login before running report tests
   beforeAll(async () => {
     const res = await request(app)
-      .post("/api/auth/login")
+      .post("/auth/login")
       .send({
         email: "admin@mims.com", // test admin credentials
         password: "admin123",
@@ -21,7 +21,7 @@ describe("Reports Module", () => {
 
   it("should fetch dashboard summary", async () => {
     const res = await request(app)
-      .get("/api/reports/summary")
+      .get("/reports/summary")
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(200);

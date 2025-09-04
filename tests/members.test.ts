@@ -9,7 +9,7 @@ describe("Members Module", () => {
   // login before running members tests
   beforeAll(async () => {
     const res = await request(app)
-      .post("/api/auth/login")
+      .post("/auth/login")
       .send({
         email: "admin@mims.com", // your test admin credentials
         password: "admin123",
@@ -22,7 +22,7 @@ describe("Members Module", () => {
 
   it("should register a new member", async () => {
     const res = await request(app)
-      .post("/api/members")
+      .post("/members")
       .set("Authorization", `Bearer ${token}`)
       .send({
         user_id: 1,
@@ -38,7 +38,7 @@ describe("Members Module", () => {
 
   it("should fetch all members", async () => {
     const res = await request(app)
-      .get("/api/members")
+      .get("/members")
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(200);
@@ -47,7 +47,7 @@ describe("Members Module", () => {
 
   it("should fetch a single member", async () => {
     const res = await request(app)
-      .get(`/api/members/${memberId}`)
+      .get(`/members/${memberId}`)
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(200);

@@ -7,7 +7,7 @@ let token: string; // token variable scoped for this file
 describe("Auth Module", () => {
   it("should register a new admin", async () => {
     const res = await request(app)
-      .post("/api/auth/register")
+      .post("/auth/register")
       .send({
         name: "Test Admin",
         email: "admin@mims.com",
@@ -22,7 +22,7 @@ describe("Auth Module", () => {
 
   it("should login and return a token", async () => {
     const res = await request(app)
-      .post("/api/auth/login")
+      .post("/auth/login")
       .send({
         email: "admin@mims.com",
         password: "admin123",

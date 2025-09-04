@@ -9,7 +9,7 @@ describe("Claims Module", () => {
   // login before running claims tests
   beforeAll(async () => {
     const res = await request(app)
-      .post("/api/auth/login")
+      .post("/auth/login")
       .send({
         email: "admin@mims.com", // use your test admin credentials
         password: "admin123",
@@ -23,7 +23,7 @@ describe("Claims Module", () => {
 
   it("should create a new claim", async () => {
     const res = await request(app)
-      .post("/api/claims")
+      .post("/claims")
       .set("Authorization", `Bearer ${token}`)
       .send({
         policy_id: 1,
@@ -38,7 +38,7 @@ describe("Claims Module", () => {
 
   it("should update claim status", async () => {
     const res = await request(app)
-      .put(`/api/claims/${claimId}`)
+      .put(`/claims/${claimId}`)
       .set("Authorization", `Bearer ${token}`)
       .send({ status: "approved" });
 

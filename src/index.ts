@@ -3,9 +3,10 @@ import dotenv from "dotenv";
 import cors from "cors";
 import { createServer } from "http";
 import { Server } from "socket.io";
+
 import authRoutes from "./routes/auth";
 import { verifyToken } from "./middleware/authMiddleware";
-import { verifyRole } from "./middleware/roleMiddleware"
+import { verifyRole } from "./middleware/roleMiddleware";
 import memberRoutes from "./routes/members";
 import policyRoutes from "./routes/policies";
 import claimRoutes from "./routes/claims";
@@ -16,15 +17,16 @@ import reportRoutes from "./routes/reports";
 import notificationRoutes from "./routes/notifications";
 
 dotenv.config();
+
 const app = express();
-export default app;
+export default app; // ✅ export app for tests
 
 const httpServer = createServer(app);
 
 // ✅ Setup Socket.IO
 const io = new Server(httpServer, {
   cors: {
-    origin: "*", // adjust to your frontend URL in production
+    origin: "*", // adjust to frontend URL in production
     methods: ["GET", "POST", "PUT", "DELETE"],
   },
 });
@@ -51,6 +53,7 @@ io.on("connection", (socket) => {
   });
 });
 
+// Utility to send notifications via socket
 export const notifyUser = (userId: number, notification: any) => {
   const socketId = onlineUsers.get(userId);
   if (socketId) {
@@ -68,7 +71,9 @@ app.get("/", (req, res) => {
   res.send("MIMS Backend Running 🚀");
 });
 
-// Auth routes
+// ======================
+// Routes
+// ======================
 app.use("/auth", authRoutes);
 app.use("/members", memberRoutes);
 app.use("/policies", policyRoutes);
@@ -77,9 +82,11 @@ app.use("/payments", paymentRoutes);
 app.use("/loans", loanRoutes);
 app.use("/repayments", repaymentRoutes);
 app.use("/reports", reportRoutes);
-app.use("/api/notifications", notificationRoutes);
+app.use("/notifications", notificationRoutes); // ✅ standardized path
 
-// ✅ Protected dashboard route
+// ======================
+// Protected test routes
+// ======================
 app.get("/dashboard", verifyToken, (req, res) => {
   res.json({
     message: "Welcome to the protected dashboard ✅",
@@ -87,21 +94,23 @@ app.get("/dashboard", verifyToken, (req, res) => {
   });
 });
 
-// ✅ Admin-only route
 app.get("/admin", verifyToken, verifyRole(["admin"]), (req, res) => {
   res.json({ message: "Welcome Admin 👑", user: (req as any).user });
 });
 
-// ✅ Insurance staff-only route
 app.get("/staff", verifyToken, verifyRole(["insurance_staff"]), (req, res) => {
   res.json({ message: "Welcome Insurance Staff 📋", user: (req as any).user });
 });
 
-// ✅ Member-only route
 app.get("/member", verifyToken, verifyRole(["member"]), (req, res) => {
   res.json({ message: "Welcome Member 🙋", user: (req as any).user });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// ======================
+// Only listen when not running tests
+// ======================
+if (process.env.NODE_ENV !== "test") {
+  httpServer.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}

@@ -9,7 +9,7 @@ describe("Loans Module", () => {
   // login before running loans tests
   beforeAll(async () => {
     const res = await request(app)
-      .post("/api/auth/login")
+      .post("/auth/login")
       .send({
         email: "admin@mims.com", // your test admin credentials
         password: "admin123",
@@ -23,7 +23,7 @@ describe("Loans Module", () => {
 
   it("should create a new loan", async () => {
     const res = await request(app)
-      .post("/api/loans")
+      .post("/loans")
       .set("Authorization", `Bearer ${token}`)
       .send({
         member_id: 1,
@@ -39,7 +39,7 @@ describe("Loans Module", () => {
 
   it("should update loan status", async () => {
     const res = await request(app)
-      .put(`/api/loans/${loanId}/status`)
+      .put(`/loans/${loanId}/status`)
       .set("Authorization", `Bearer ${token}`)
       .send({ status: "approved" });
 
