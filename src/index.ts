@@ -3,17 +3,17 @@ import dotenv from "dotenv";
 import cors from "cors";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import authRoutes from "./routes/auth.js";
-import { verifyToken } from "./middleware/authMiddleware.js";
-import { verifyRole } from "./middleware/roleMiddleware.js"
-import memberRoutes from "./routes/members.js";
-import policyRoutes from "./routes/policies.js";
-import claimRoutes from "./routes/claims.js";
-import paymentRoutes from "./routes/payments.js";
-import loanRoutes from "./routes/loans.js";
-import repaymentRoutes from "./routes/repayments.js";
-import reportRoutes from "./routes/reports.js";
-import notificationRoutes from "./routes/notifications.js";
+import authRoutes from "./routes/auth";
+import { verifyToken } from "./middleware/authMiddleware";
+import { verifyRole } from "./middleware/roleMiddleware"
+import memberRoutes from "./routes/members";
+import policyRoutes from "./routes/policies";
+import claimRoutes from "./routes/claims";
+import paymentRoutes from "./routes/payments";
+import loanRoutes from "./routes/loans";
+import repaymentRoutes from "./routes/repayments";
+import reportRoutes from "./routes/reports";
+import notificationRoutes from "./routes/notifications";
 
 dotenv.config();
 const app = express();
