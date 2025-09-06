@@ -55,7 +55,7 @@ router.get("/", verifyToken, async (req, res) => {
       params = [user.user_id];
     }
 
-    query += ` ORDER BY p.created_at DESC`;
+    query += ` ORDER BY u.created_at DESC`;
 
     const result = await pool.query(query, params);
     res.json(result.rows);

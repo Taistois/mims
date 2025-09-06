@@ -2,7 +2,7 @@
   "name": "mims-backend",
   "version": "1.0.0",
   "main": "index.js",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
     "dev": "nodemon src/index.ts",
     "test": "jest --detectOpenHandles --forceExit"

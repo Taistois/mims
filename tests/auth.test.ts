@@ -1,10 +1,14 @@
 // tests/auth.test.ts
 import request from "supertest";
-import app from "../src/index"; // Import your main express app
+import dotenv from "dotenv";
+dotenv.config(); // Ensure .env variables are loaded before tests
+
+import app from "../src/index"; // Your main Express app
 import pool from "../src/config/db";
 import bcrypt from "bcrypt";
 
-let adminToken: string; // Will store admin token for all tests
+let adminToken: string; // Admin token
+let memberToken: string; // Member token
 
 describe("Auth Module", () => {
   /**
@@ -15,31 +19,38 @@ describe("Auth Module", () => {
   beforeAll(async () => {
     const hashedPassword = await bcrypt.hash("Adminpass123", 10);
 
-    // Insert admin user directly into DB if not exists
+    // Upsert admin to ensure password is always correct
     await pool.query(
       `INSERT INTO users (name, email, phone, role, password_hash)
        VALUES ('Seed Admin', 'admin@mims.com', '099999999', 'admin', $1)
-       ON CONFLICT (email) DO NOTHING`,
+       ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash`,
       [hashedPassword]
     );
 
-    // Login admin to get token
+    // Login admin
     const res = await request(app)
       .post("/auth/login")
       .send({ email: "admin@mims.com", password: "Adminpass123" });
 
+    if (res.status !== 200) {
+      console.log("Admin login failed response:", res.body);
+      throw new Error(
+        `Admin login failed in beforeAll: ${res.status} ${JSON.stringify(res.body)}`
+      );
+    }
+
     adminToken = res.body.token;
-  });
+  }, 10000); // 10s timeout in case DB is slow
 
   /**
    * ----------------------------------------
-   * Test: Register a new user (Admin required)
+   * Test: Register a new member user
    * ----------------------------------------
    */
   it("should register a new member user", async () => {
     const res = await request(app)
       .post("/auth/register")
-      .set("Authorization", `Bearer ${adminToken}`) // ✅ Admin token required
+      .set("Authorization", `Bearer ${adminToken}`)
       .send({
         name: "Test Member",
         email: "member@mims.com",
@@ -47,6 +58,8 @@ describe("Auth Module", () => {
         password: "member123",
         role: "member",
       });
+
+    if (res.status !== 200) console.log("Register Response:", res.body);
 
     expect(res.status).toBe(200);
     expect(res.body.user).toHaveProperty("user_id");
@@ -65,11 +78,12 @@ describe("Auth Module", () => {
         password: "member123",
       });
 
+    if (res.status !== 200) console.log("Login Response:", res.body);
+
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("token");
 
-    // Save this token for the next test
-    adminToken = res.body.token;
+    memberToken = res.body.token; // Save member token
   });
 
   /**
@@ -79,8 +93,10 @@ describe("Auth Module", () => {
    */
   it("should access a protected route with token", async () => {
     const res = await request(app)
-      .get("/dashboard") // ✅ Your actual protected route
-      .set("Authorization", `Bearer ${adminToken}`);
+      .get("/dashboard") // Ensure this route is protected
+      .set("Authorization", `Bearer ${memberToken}`);
+
+    if (res.status !== 200) console.log("Protected Route Response:", res.body);
 
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("user");
@@ -93,5 +109,7 @@ describe("Auth Module", () => {
    */
   afterAll(async () => {
     await pool.query("DELETE FROM users WHERE email = 'member@mims.com'");
+    await pool.query("DELETE FROM users WHERE email = 'admin@mims.com' AND name = 'Seed Admin'");
+    await pool.end(); // Close DB pool to prevent open handles
   });
 });
