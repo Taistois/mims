@@ -88,10 +88,7 @@ app.use("/notifications", notificationRoutes); // ✅ standardized path
 // Protected test routes
 // ======================
 app.get("/dashboard", verifyToken, (req, res) => {
-  res.json({
-    message: "Welcome to the protected dashboard ✅",
-    user: (req as any).user,
-  });
+  res.json({ message: "Welcome to the protected dashboard", user: (req as any).user });
 });
 
 app.get("/admin", verifyToken, verifyRole(["admin"]), (req, res) => {
