@@ -41,6 +41,11 @@ router.post(
         [loan_id, amount, method]
       );
 
+      const repaymentRecord = {
+        ...paymentResult.rows[0],
+        repayment_id: paymentResult.rows[0].payment_id // map payment_id → repayment_id
+      };
+
       // 3️⃣ Calculate total repaid
       const totalPaidResult = await pool.query(
         "SELECT SUM(amount) AS total_paid FROM payments WHERE loan_id = $1",
@@ -50,7 +55,7 @@ router.post(
       const totalPaid = totalPaidResult.rows[0].total_paid || 0;
       const loanAmount = loanData.amount;
 
-      // 4️⃣ If fully repaid, update loan status
+      // 4️⃣ Update loan status if fully repaid
       let updatedLoanStatus = loanData.status;
       if (parseFloat(totalPaid) >= parseFloat(loanAmount)) {
         updatedLoanStatus = "repaid";
@@ -74,7 +79,7 @@ router.post(
 
       res.json({
         message: "Repayment recorded ✅",
-        repayment: paymentResult.rows[0],
+        repayment: repaymentRecord,
         totalPaid,
         loanStatus: updatedLoanStatus
       });
@@ -119,7 +124,13 @@ router.get("/:loan_id", verifyToken, async (req, res) => {
       return res.status(404).json({ error: "No repayments found ❌" });
     }
 
-    res.json(result.rows);
+    // Map payment_id → repayment_id for consistency
+    const repayments = result.rows.map(row => ({
+      ...row,
+      repayment_id: row.payment_id
+    }));
+
+    res.json(repayments);
   } catch (err) {
     console.error("Fetch Repayments Error:", err);
     res.status(500).json({ error: "Failed to fetch repayments ❌" });

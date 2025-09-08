@@ -82,7 +82,7 @@ app.use("/payments", paymentRoutes);
 app.use("/loans", loanRoutes);
 app.use("/repayments", repaymentRoutes);
 app.use("/reports", reportRoutes);
-app.use("/notifications", notificationRoutes); // ✅ standardized path
+app.use("/api/notifications", notificationRoutes);// ✅ standardized path
 
 // ======================
 // Protected test routes

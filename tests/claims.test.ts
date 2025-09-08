@@ -19,36 +19,34 @@ describe("Claims Module", () => {
     const res = await request(app)
       .post("/auth/login")
       .send({
-        email: "admin@mims.com", // seeded admin from auth tests
+        email: "admin@mims.com",
         password: "Adminpass123",
       });
 
-    if (res.status !== 200) console.log("Admin login failed:", res.body);
-
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("token");
-
     token = res.body.token;
   }, 10000);
 
   /**
    * ----------------------------------------
-   * Test: Create a new claim
+   * Test: Create a new claim using existing policy
    * ----------------------------------------
    */
   it("should create a new claim", async () => {
+    // Use existing policy_id with member_id assigned (policy_id = 3)
     const res = await request(app)
       .post("/claims")
       .set("Authorization", `Bearer ${token}`)
       .send({
-        policy_id: 3,
+        policy_id: 3, // existing policy
         claim_amount: 2000,
-        description: "Medical expenses",
+        description: "Medical expenses for test",
       });
 
-    if (res.status !== 200) console.log("Create Claim Response:", res.body);
+    if (res.status !== 201) console.log("Create Claim Response:", res.body);
 
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(201); // route returns 201 on creation
     expect(res.body.claim).toHaveProperty("claim_id");
 
     claimId = res.body.claim.claim_id;
@@ -73,7 +71,7 @@ describe("Claims Module", () => {
 
   /**
    * ----------------------------------------
-   * Cleanup: Remove test claims after tests
+   * Cleanup: Remove test claim after tests
    * ----------------------------------------
    */
   afterAll(async () => {

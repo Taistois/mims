@@ -7,6 +7,8 @@ import app from "../src/index";
 import pool from "../src/config/db";
 
 let token: string;
+let repaymentId: number;
+let loanId: number;
 
 describe("Repayments Module", () => {
   /**
@@ -15,19 +17,28 @@ describe("Repayments Module", () => {
    * ----------------------------------------
    */
   beforeAll(async () => {
+    // 1️⃣ Login as admin
     const res = await request(app)
       .post("/auth/login")
       .send({
-        email: "admin@mims.com", // seeded admin
+        email: "admin@mims.com",
         password: "Adminpass123",
       });
 
-    if (res.status !== 200) console.log("Admin login failed:", res.body);
-
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("token");
-
     token = res.body.token;
+
+    // 2️⃣ Get an approved loan
+    const loanRes = await pool.query(
+      `SELECT loan_id FROM loans WHERE status = 'approved' LIMIT 1`
+    );
+
+    if (loanRes.rows.length === 0) {
+      throw new Error("No approved loan available for testing repayments");
+    }
+
+    loanId = loanRes.rows[0].loan_id;
   });
 
   /**
@@ -40,7 +51,7 @@ describe("Repayments Module", () => {
       .post("/repayments")
       .set("Authorization", `Bearer ${token}`)
       .send({
-        loan_id: 3, // adjust if necessary
+        loan_id: loanId,
         amount: 5000,
         method: "mobile_money",
       });
@@ -48,7 +59,10 @@ describe("Repayments Module", () => {
     if (res.status !== 200) console.log("Record Repayment Response:", res.body);
 
     expect(res.status).toBe(200);
-    expect(res.body.repayment).toHaveProperty("payment_id");
+    expect(res.body.repayment).toHaveProperty("repayment_id");
+    expect(res.body.repayment.loan_id).toBe(loanId);
+
+    repaymentId = res.body.repayment.repayment_id;
   });
 
   /**
@@ -58,7 +72,7 @@ describe("Repayments Module", () => {
    */
   it("should fetch repayments for a loan", async () => {
     const res = await request(app)
-      .get("/repayments/1") // adjust loan_id if needed
+      .get(`/repayments/${loanId}`)
       .set("Authorization", `Bearer ${token}`);
 
     if (res.status !== 200) console.log("Fetch Repayments Response:", res.body);
@@ -69,10 +83,13 @@ describe("Repayments Module", () => {
 
   /**
    * ----------------------------------------
-   * Cleanup: Close DB pool after tests
+   * Cleanup: Remove test repayment after tests
    * ----------------------------------------
    */
   afterAll(async () => {
+    if (repaymentId) {
+      await pool.query("DELETE FROM repayments WHERE repayment_id = $1", [repaymentId]);
+    }
     await pool.end();
   });
 });
