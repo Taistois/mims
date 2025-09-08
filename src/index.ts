@@ -16,14 +16,19 @@ import repaymentRoutes from "./routes/repayments";
 import reportRoutes from "./routes/reports";
 import notificationRoutes from "./routes/notifications";
 
-dotenv.config();
+// -----------------------------
+// Load env variables quietly
+// -----------------------------
+dotenv.config({ path: ".env", debug: process.env.NODE_ENV === "development", override: true });
 
 const app = express();
 export default app; // ✅ export app for tests
 
 const httpServer = createServer(app);
 
-// ✅ Setup Socket.IO
+// -----------------------------
+// Setup Socket.IO
+// -----------------------------
 const io = new Server(httpServer, {
   cors: {
     origin: "*", // adjust to frontend URL in production
@@ -35,15 +40,15 @@ const io = new Server(httpServer, {
 const onlineUsers = new Map();
 
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+  if (process.env.NODE_ENV === "development") console.log("User connected:", socket.id);
 
   socket.on("registerUser", (userId) => {
     onlineUsers.set(userId, socket.id);
-    console.log(`User ${userId} registered for notifications`);
+    if (process.env.NODE_ENV === "development") console.log(`User ${userId} registered for notifications`);
   });
 
   socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
+    if (process.env.NODE_ENV === "development") console.log("User disconnected:", socket.id);
     for (const [userId, socketId] of onlineUsers.entries()) {
       if (socketId === socket.id) {
         onlineUsers.delete(userId);
@@ -56,17 +61,20 @@ io.on("connection", (socket) => {
 // Utility to send notifications via socket
 export const notifyUser = (userId: number, notification: any) => {
   const socketId = onlineUsers.get(userId);
-  if (socketId) {
-    io.to(socketId).emit("notification", notification);
-  }
+  if (socketId) io.to(socketId).emit("notification", notification);
 };
 
+// -----------------------------
+// Middleware
+// -----------------------------
 app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
 
+// -----------------------------
 // Root route
+// -----------------------------
 app.get("/", (req, res) => {
   res.send("MIMS Backend Running 🚀");
 });
@@ -82,7 +90,7 @@ app.use("/payments", paymentRoutes);
 app.use("/loans", loanRoutes);
 app.use("/repayments", repaymentRoutes);
 app.use("/reports", reportRoutes);
-app.use("/api/notifications", notificationRoutes);// ✅ standardized path
+app.use("/api/notifications", notificationRoutes); // ✅ standardized path
 
 // ======================
 // Protected test routes
