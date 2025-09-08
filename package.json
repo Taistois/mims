@@ -1,11 +1,14 @@
 {
   "name": "mims-backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
   "type": "commonjs",
   "scripts": {
     "dev": "nodemon src/index.ts",
-    "test": "jest --detectOpenHandles --forceExit"
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "jest --detectOpenHandles --forceExit",
+  "clean": "rimraf dist"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
