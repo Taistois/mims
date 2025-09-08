@@ -70,7 +70,7 @@ export const notifyUser = (userId: number, notification: any) => {
 app.use(cors());
 app.use(express.json());
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 
 // -----------------------------
 // Root route
