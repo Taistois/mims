@@ -3,7 +3,11 @@ import dotenv from "dotenv";
 import cors from "cors";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import "./config/validateEnv"; // ✅ Environment validation
 
+// -----------------------------
+// Routes & Middleware
+// -----------------------------
 import authRoutes from "./routes/auth";
 import { verifyToken } from "./middleware/authMiddleware";
 import { verifyRole } from "./middleware/roleMiddleware";
@@ -19,7 +23,11 @@ import notificationRoutes from "./routes/notifications";
 // -----------------------------
 // Load env variables quietly
 // -----------------------------
-dotenv.config({ path: ".env", debug: process.env.NODE_ENV === "development", override: true });
+dotenv.config({
+  path: ".env",
+  debug: process.env.NODE_ENV === "development",
+  override: true,
+});
 
 const app = express();
 export default app; // ✅ export app for tests
@@ -27,16 +35,39 @@ export default app; // ✅ export app for tests
 const httpServer = createServer(app);
 
 // -----------------------------
-// Setup Socket.IO
+// Secure CORS Setup
+// -----------------------------
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://127.0.0.1:5173",
+  "https://mims-dashboard.vercel.app", // example frontend
+  "https://your-production-domain.com",
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS ❌"));
+      }
+    },
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
+
+// -----------------------------
+// Socket.IO Setup
 // -----------------------------
 const io = new Server(httpServer, {
   cors: {
-    origin: "*", // adjust to frontend URL in production
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "DELETE"],
   },
 });
 
-// Store connected users
 const onlineUsers = new Map();
 
 io.on("connection", (socket) => {
@@ -44,7 +75,9 @@ io.on("connection", (socket) => {
 
   socket.on("registerUser", (userId) => {
     onlineUsers.set(userId, socket.id);
-    if (process.env.NODE_ENV === "development") console.log(`User ${userId} registered for notifications`);
+    if (process.env.NODE_ENV === "development") {
+      console.log(`User ${userId} registered for notifications`);
+    }
   });
 
   socket.on("disconnect", () => {
@@ -67,7 +100,6 @@ export const notifyUser = (userId: number, notification: any) => {
 // -----------------------------
 // Middleware
 // -----------------------------
-app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 8080;
@@ -80,7 +112,7 @@ app.get("/", (req, res) => {
 });
 
 // ======================
-// Routes
+// Main Routes
 // ======================
 app.use("/auth", authRoutes);
 app.use("/members", memberRoutes);
@@ -93,7 +125,7 @@ app.use("/reports", reportRoutes);
 app.use("/api/notifications", notificationRoutes); // ✅ standardized path
 
 // ======================
-// Protected test routes
+// Protected Test Routes
 // ======================
 app.get("/dashboard", verifyToken, (req, res) => {
   res.json({ message: "Welcome to the protected dashboard", user: (req as any).user });
@@ -112,10 +144,21 @@ app.get("/member", verifyToken, verifyRole(["member"]), (req, res) => {
 });
 
 // ======================
-// Only listen when not running tests
+// Start Server
 // ======================
 if (process.env.NODE_ENV !== "test") {
   httpServer.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`🚀 Server running on port ${PORT}`);
   });
 }
+
+// ======================
+// Error Handling 
+// ======================
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception:", err);
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled Rejection:", reason);
+});
