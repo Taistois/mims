@@ -6,13 +6,15 @@
     "moduleResolution": "node16",            
     "rootDir": "src",                         
     "outDir": "dist",                         
+    "allowSyntheticDefaultImports": true,
+     "esModuleInterop": true,
 
     /* Strictness & consistency */
     "strict": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "esModuleInterop": true,
     "isolatedModules": true,
+   
 
     /* Helpful for imports */
     "resolveJsonModule": true
