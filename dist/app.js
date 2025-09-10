@@ -17,14 +17,30 @@ const loans_1 = __importDefault(require("./routes/loans"));
 const repayments_1 = __importDefault(require("./routes/repayments"));
 const reports_1 = __importDefault(require("./routes/reports"));
 const notifications_1 = __importDefault(require("./routes/notifications"));
+const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
+const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
+const swagger_jsdoc_1 = __importDefault(require("swagger-jsdoc"));
+const errorHandler_1 = require("./middleware/errorHandler");
 dotenv_1.default.config({ path: ".env" });
 const app = (0, express_1.default)();
 // -----------------------------
 // Middleware
 // -----------------------------
 app.use(express_1.default.json());
+const swaggerOptions = {
+    definition: {
+        openapi: "3.0.0",
+        info: {
+            title: "MIMS API",
+            version: "1.0.0",
+            description: "API Documentation for MIMS Backend",
+        },
+    },
+    apis: ["./src/routes/*.ts"],
+};
+const swaggerDocs = (0, swagger_jsdoc_1.default)(swaggerOptions);
 const allowedOrigins = [
-    "http://localhost:3000",
+    "http://localhost:5173",
     "http://127.0.0.1:5173",
     "https://mims-dashboard.vercel.app",
     "https://your-production-domain.com",
@@ -59,6 +75,15 @@ app.use("/loans", loans_1.default);
 app.use("/repayments", repayments_1.default);
 app.use("/reports", reports_1.default);
 app.use("/api/notifications", notifications_1.default);
+app.use("/api-docs", swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(swaggerDocs));
+app.use(errorHandler_1.errorHandler);
+const apiLimiter = (0, express_rate_limit_1.default)({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: "Too many requests from this IP, please try again later.",
+});
+app.use("/auth", apiLimiter, auth_1.default);
+app.use("/auth", apiLimiter, auth_1.default);
 // -----------------------------
 // Protected Testing Routes
 // -----------------------------
