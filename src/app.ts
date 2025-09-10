@@ -13,6 +13,7 @@ import repaymentRoutes from "./routes/repayments";
 import reportRoutes from "./routes/reports";
 import notificationRoutes from "./routes/notifications";
 import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 
 dotenv.config({ path: ".env" });
 
@@ -63,7 +64,15 @@ app.use("/loans", loanRoutes);
 app.use("/repayments", repaymentRoutes);
 app.use("/reports", reportRoutes);
 app.use("/api/notifications", notificationRoutes);
-app.use(helmet());
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: "Too many requests from this IP, please try again later.",
+});
+
+app.use("/auth", apiLimiter, authRoutes);
+app.use("/auth", apiLimiter, authRoutes);
+
 // -----------------------------
 // Protected Testing Routes
 // -----------------------------
