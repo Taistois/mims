@@ -3,6 +3,8 @@ import { Server } from "socket.io";
 import app from "./app";
 
 const PORT = process.env.PORT || 8080;
+
+// Create HTTP server
 const httpServer = createServer(app);
 
 // -----------------------------
@@ -13,7 +15,7 @@ const io = new Server(httpServer, {
     origin: [
       "http://localhost:5173",
       "http://127.0.0.1:5173",
-      "https://mims-dashboard.vercel.app",
+      "https://mims-dashboard.vercel.app", // Production frontend
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
   },
@@ -40,6 +42,7 @@ io.on("connection", (socket) => {
   });
 });
 
+// Utility to send notifications
 export const notifyUser = (userId: number, notification: any) => {
   const socketId = onlineUsers.get(userId);
   if (socketId) {
