@@ -3,7 +3,7 @@ import request from "supertest";
 import dotenv from "dotenv";
 dotenv.config();
 
-import app from "../src/index";
+import app from "../src/app";
 import pool from "../src/config/db";
 
 let token: string;

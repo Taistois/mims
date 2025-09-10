@@ -25,13 +25,13 @@ router.post("/register", authMiddleware_1.verifyToken, (0, authMiddleware_1.auth
                 error: "Invalid role. Must be admin, member, or insurance_staff.",
             });
         }
-        // ✅ Hash password
-        const hashedPassword = await bcrypt_1.default.hash(password, 10);
+        // ✅ Hash password securely
+        const hashedPassword = await bcrypt_1.default.hash(password, 12);
         // ✅ Insert into database
         const result = await db_1.default.query(`INSERT INTO users (name, email, phone, role, password_hash) 
-       VALUES ($1, $2, $3, $4, $5) 
-       RETURNING user_id, name, email, phone, role, created_at`, [name, email, phone, role, hashedPassword]);
-        res.json({
+         VALUES ($1, $2, $3, $4, $5) 
+         RETURNING user_id, name, email, phone, role, created_at`, [name, email, phone, role, hashedPassword]);
+        res.status(201).json({
             message: "User registered successfully ✅",
             user: result.rows[0],
         });
@@ -66,7 +66,7 @@ router.post("/login", async (req, res) => {
             return res.status(400).json({ error: "Invalid email or password ❌" });
         }
         // ✅ Generate JWT token
-        const token = jsonwebtoken_1.default.sign({ user_id: user.user_id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1h" } // expires in 1 hour
+        const token = jsonwebtoken_1.default.sign({ user_id: user.user_id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "2h" } // token valid for 2 hours
         );
         res.json({
             message: "Login successful ✅",
@@ -92,7 +92,7 @@ router.post("/login", async (req, res) => {
  */
 router.get("/users", authMiddleware_1.verifyToken, (0, authMiddleware_1.authorizeRoles)("admin"), async (req, res) => {
     try {
-        const result = await db_1.default.query("SELECT user_id, name, email, phone, role, created_at FROM users");
+        const result = await db_1.default.query("SELECT user_id, name, email, phone, role, created_at FROM users ORDER BY created_at DESC");
         res.json(result.rows);
     }
     catch (err) {

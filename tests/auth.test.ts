@@ -3,7 +3,7 @@ import request from "supertest";
 import dotenv from "dotenv";
 dotenv.config(); // Ensure .env variables are loaded before tests
 
-import app from "../src/index"; // Your main Express app
+import app from "../src/app"; // Your main Express app
 import pool from "../src/config/db";
 import bcrypt from "bcrypt";
 

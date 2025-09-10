@@ -1,3 +1,4 @@
+// src/config/db.ts
 import { Pool } from "pg";
 import dotenv from "dotenv";
 
@@ -10,7 +11,7 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   ssl: {
-    rejectUnauthorized: false, // Required for Render
+    rejectUnauthorized: false, // ✅ Required for Render
   },
 });
 
