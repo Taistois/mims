@@ -12,6 +12,7 @@ import loanRoutes from "./routes/loans";
 import repaymentRoutes from "./routes/repayments";
 import reportRoutes from "./routes/reports";
 import notificationRoutes from "./routes/notifications";
+import helmet from "helmet";
 
 dotenv.config({ path: ".env" });
 
@@ -62,7 +63,7 @@ app.use("/loans", loanRoutes);
 app.use("/repayments", repaymentRoutes);
 app.use("/reports", reportRoutes);
 app.use("/api/notifications", notificationRoutes);
-
+app.use(helmet());
 // -----------------------------
 // Protected Testing Routes
 // -----------------------------
