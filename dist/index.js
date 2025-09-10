@@ -15,7 +15,7 @@ const httpServer = (0, http_1.createServer)(app_1.default);
 const io = new socket_io_1.Server(httpServer, {
     cors: {
         origin: [
-            "http://localhost:3000",
+            "http://localhost:5173",
             "http://127.0.0.1:5173",
             "https://mims-dashboard.vercel.app",
         ],
