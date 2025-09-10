@@ -14,6 +14,9 @@ import reportRoutes from "./routes/reports";
 import notificationRoutes from "./routes/notifications";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import swaggerUi from "swagger-ui-express";
+import swaggerJsDoc from "swagger-jsdoc";
+import { errorHandler } from "./middleware/errorHandler";
 
 dotenv.config({ path: ".env" });
 
@@ -23,6 +26,19 @@ const app = express();
 // Middleware
 // -----------------------------
 app.use(express.json());
+const swaggerOptions = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "MIMS API",
+      version: "1.0.0",
+      description: "API Documentation for MIMS Backend",
+    },
+  },
+  apis: ["./src/routes/*.ts"],
+};
+
+const swaggerDocs = swaggerJsDoc(swaggerOptions);
 
 const allowedOrigins = [
   "http://localhost:3000",
@@ -64,6 +80,9 @@ app.use("/loans", loanRoutes);
 app.use("/repayments", repaymentRoutes);
 app.use("/reports", reportRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+app.use(errorHandler);
+
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per windowMs
