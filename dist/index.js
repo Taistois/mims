@@ -8,6 +8,7 @@ const http_1 = require("http");
 const socket_io_1 = require("socket.io");
 const app_1 = __importDefault(require("./app"));
 const PORT = process.env.PORT || 8080;
+// Create HTTP server
 const httpServer = (0, http_1.createServer)(app_1.default);
 // -----------------------------
 // Socket.IO Setup
@@ -17,7 +18,7 @@ const io = new socket_io_1.Server(httpServer, {
         origin: [
             "http://localhost:5173",
             "http://127.0.0.1:5173",
-            "https://mims-dashboard.vercel.app",
+            "https://mims-dashboard.vercel.app", // Production frontend
         ],
         methods: ["GET", "POST", "PUT", "DELETE"],
     },
@@ -39,6 +40,7 @@ io.on("connection", (socket) => {
         }
     });
 });
+// Utility to send notifications
 const notifyUser = (userId, notification) => {
     const socketId = onlineUsers.get(userId);
     if (socketId) {
