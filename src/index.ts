@@ -1,10 +1,15 @@
 import { createServer } from "http";
 import { Server } from "socket.io";
-import app from "./app";
+import app from "@app"; // absolute import (app.ts)
 
+// -----------------------------
+// Environment & Port
+// -----------------------------
 const PORT = process.env.PORT || 8080;
 
+// -----------------------------
 // Create HTTP server
+// -----------------------------
 const httpServer = createServer(app);
 
 // -----------------------------
@@ -42,7 +47,9 @@ io.on("connection", (socket) => {
   });
 });
 
+// -----------------------------
 // Utility to send notifications
+// -----------------------------
 export const notifyUser = (userId: number, notification: any) => {
   const socketId = onlineUsers.get(userId);
   if (socketId) {

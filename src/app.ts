@@ -20,15 +20,13 @@ import loanRoutes from "./routes/loans";
 import repaymentRoutes from "./routes/repayments";
 import reportRoutes from "./routes/reports";
 import notificationRoutes from "./routes/notifications";
-import router from './routes/router';
+import mainRouter from "./routes/router"; // renamed import to avoid confusion
 
 dotenv.config({ path: ".env" });
 
 const app = express.default();
 
-// -----------------------------
-// Security & Middleware
-// -----------------------------
+// Middleware
 app.use(express.json());
 app.use(helmet());
 
@@ -54,16 +52,14 @@ app.use(
   })
 );
 
-// Rate limiter (15 min, 100 requests per IP)
+// Rate limiter
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
   message: "Too many requests from this IP, please try again later.",
 });
 
-// -----------------------------
 // Swagger Setup
-// -----------------------------
 const swaggerOptions = {
   definition: {
     openapi: "3.0.0",
@@ -79,17 +75,13 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-// -----------------------------
-// Root Health Check
-// -----------------------------
+// Health Check
 app.get("/", (req, res) => {
   res.status(200).send("🚀 MIMS Backend Running Successfully!");
 });
 
-// -----------------------------
 // Main Routes
-// -----------------------------
-app.use("/auth", apiLimiter, authRoutes); // ✅ with rate limiter
+app.use("/auth", apiLimiter, authRoutes);
 app.use("/members", memberRoutes);
 app.use("/policies", policyRoutes);
 app.use("/claims", claimRoutes);
@@ -98,16 +90,11 @@ app.use("/loans", loanRoutes);
 app.use("/repayments", repaymentRoutes);
 app.use("/reports", reportRoutes);
 app.use("/api/notifications", notificationRoutes);
-app.use(express.json());
-app.use('/router', router);
-// -----------------------------
-// Protected Testing Routes
-// -----------------------------
+app.use("/router", mainRouter); // use renamed import
+
+// Protected routes
 app.get("/dashboard", verifyToken, (req, res) => {
-  res.json({
-    message: "Welcome to the protected dashboard",
-    user: (req as any).user,
-  });
+  res.json({ message: "Welcome to the protected dashboard", user: (req as any).user });
 });
 
 app.get("/admin", verifyToken, verifyRole(["admin"]), (req, res) => {
@@ -122,9 +109,7 @@ app.get("/member", verifyToken, verifyRole(["member"]), (req, res) => {
   res.json({ message: "Welcome Member 🙋", user: (req as any).user });
 });
 
-// -----------------------------
 // Global Error Handler
-// -----------------------------
 app.use(errorHandler);
 
 export default app;
