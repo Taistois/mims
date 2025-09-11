@@ -20,7 +20,7 @@ import loanRoutes from "./routes/loans";
 import repaymentRoutes from "./routes/repayments";
 import reportRoutes from "./routes/reports";
 import notificationRoutes from "./routes/notifications";
-import mainRouter from "./routes/router"; // renamed import to avoid confusion
+import router from "@routes/router"; // renamed import to avoid confusion
 
 dotenv.config({ path: ".env" });
 
@@ -90,7 +90,7 @@ app.use("/loans", loanRoutes);
 app.use("/repayments", repaymentRoutes);
 app.use("/reports", reportRoutes);
 app.use("/api/notifications", notificationRoutes);
-app.use("/router", mainRouter); // use renamed import
+app.use("/router", router); // use renamed import
 
 // Protected routes
 app.get("/dashboard", verifyToken, (req, res) => {
