@@ -6,10 +6,11 @@
   "type": "commonjs",
   "scripts": {
     "dev": "nodemon --watch src --exec ts-node src/index.ts",
-    "build": "npx tsc",
+    "build": "tsc",
     "start": "node -r tsconfig-paths/register dist/index.js",
-    "test": "jest --detectOpenHandles --forceExit --runInBand",
-    "clean": "rimraf dist"
+    "start:prod": "npm run build && npm run start",
+    "clean": "rimraf dist",
+    "test": "jest --detectOpenHandles --forceExit --runInBand"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

@@ -1,4 +1,4 @@
-import * as express from "express";
+import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import helmet from "helmet";
@@ -16,19 +16,20 @@ import loanRoutes from "./routes/loans";
 import repaymentRoutes from "./routes/repayments";
 import reportRoutes from "./routes/reports";
 import notificationRoutes from "./routes/notifications";
-import router from "./routes/router";
+import router from "./routes/router"; // make sure this file is ./routes/router.ts
 
 // Middleware
 import { verifyToken } from "./middleware/authMiddleware";
 import { verifyRole } from "./middleware/roleMiddleware";
 import { errorHandler } from "./middleware/errorHandler";
 
-
 dotenv.config({ path: ".env" });
 
-const app = express.default();
+const app = express();
 
+// -----------------------------
 // Middleware
+// -----------------------------
 app.use(express.json());
 app.use(helmet());
 
@@ -56,12 +57,14 @@ app.use(
 
 // Rate limiter
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100,
   message: "Too many requests from this IP, please try again later.",
 });
 
+// -----------------------------
 // Swagger Setup
+// -----------------------------
 const swaggerOptions = {
   definition: {
     openapi: "3.0.0",
@@ -71,18 +74,22 @@ const swaggerOptions = {
       description: "API Documentation for MIMS Backend",
     },
   },
-  apis: ["./src/routes/*.ts"],
+  apis: ["./src/routes/*.ts"], // make sure this matches your TS files
 };
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
+// -----------------------------
 // Health Check
-app.get("/", (req, res) => {
+// -----------------------------
+app.get("/", (_req, res) => {
   res.status(200).send("🚀 MIMS Backend Running Successfully!");
 });
 
+// -----------------------------
 // Main Routes
+// -----------------------------
 app.use("/auth", apiLimiter, authRoutes);
 app.use("/members", memberRoutes);
 app.use("/policies", policyRoutes);
@@ -92,9 +99,11 @@ app.use("/loans", loanRoutes);
 app.use("/repayments", repaymentRoutes);
 app.use("/reports", reportRoutes);
 app.use("/api/notifications", notificationRoutes);
-app.use("/router", router); // use renamed import
+app.use("/router", router); // make sure ./routes/router.ts exists
 
-// Protected routes
+// -----------------------------
+// Protected Routes
+// -----------------------------
 app.get("/dashboard", verifyToken, (req, res) => {
   res.json({ message: "Welcome to the protected dashboard", user: (req as any).user });
 });
@@ -111,7 +120,9 @@ app.get("/member", verifyToken, verifyRole(["member"]), (req, res) => {
   res.json({ message: "Welcome Member 🙋", user: (req as any).user });
 });
 
+// -----------------------------
 // Global Error Handler
+// -----------------------------
 app.use(errorHandler);
 
 export default app;

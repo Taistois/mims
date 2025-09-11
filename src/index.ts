@@ -1,13 +1,15 @@
 import { createServer } from "http";
 import { Server } from "socket.io";
-import app from "./app"; // relative import — fixed
+import app from "./app"; // relative import — important for deployment
 
 const PORT = process.env.PORT || 8080;
 
-// create HTTP server
+// Create HTTP server
 const httpServer = createServer(app);
 
-// Socket.IO setup
+// -----------------------------
+// Socket.IO Setup
+// -----------------------------
 const io = new Server(httpServer, {
   cors: {
     origin: [
@@ -16,6 +18,7 @@ const io = new Server(httpServer, {
       "https://mims-dashboard.vercel.app", // Production frontend
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
   },
 });
 

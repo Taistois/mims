@@ -1,42 +1,9 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const express = __importStar(require("express"));
+const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const helmet_1 = __importDefault(require("helmet"));
@@ -53,15 +20,17 @@ const loans_1 = __importDefault(require("./routes/loans"));
 const repayments_1 = __importDefault(require("./routes/repayments"));
 const reports_1 = __importDefault(require("./routes/reports"));
 const notifications_1 = __importDefault(require("./routes/notifications"));
-const router_1 = __importDefault(require("./routes/router"));
+const router_1 = __importDefault(require("./routes/router")); // make sure this file is ./routes/router.ts
 // Middleware
 const authMiddleware_1 = require("./middleware/authMiddleware");
 const roleMiddleware_1 = require("./middleware/roleMiddleware");
 const errorHandler_1 = require("./middleware/errorHandler");
 dotenv_1.default.config({ path: ".env" });
-const app = express.default();
+const app = (0, express_1.default)();
+// -----------------------------
 // Middleware
-app.use(express.json());
+// -----------------------------
+app.use(express_1.default.json());
 app.use((0, helmet_1.default)());
 // CORS configuration
 const allowedOrigins = [
@@ -84,11 +53,13 @@ app.use((0, cors_1.default)({
 }));
 // Rate limiter
 const apiLimiter = (0, express_rate_limit_1.default)({
-    windowMs: 15 * 60 * 1000,
+    windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100,
     message: "Too many requests from this IP, please try again later.",
 });
+// -----------------------------
 // Swagger Setup
+// -----------------------------
 const swaggerOptions = {
     definition: {
         openapi: "3.0.0",
@@ -98,15 +69,19 @@ const swaggerOptions = {
             description: "API Documentation for MIMS Backend",
         },
     },
-    apis: ["./src/routes/*.ts"],
+    apis: ["./src/routes/*.ts"], // make sure this matches your TS files
 };
 const swaggerDocs = (0, swagger_jsdoc_1.default)(swaggerOptions);
 app.use("/api-docs", swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(swaggerDocs));
+// -----------------------------
 // Health Check
-app.get("/", (req, res) => {
+// -----------------------------
+app.get("/", (_req, res) => {
     res.status(200).send("🚀 MIMS Backend Running Successfully!");
 });
+// -----------------------------
 // Main Routes
+// -----------------------------
 app.use("/auth", apiLimiter, auth_1.default);
 app.use("/members", members_1.default);
 app.use("/policies", policies_1.default);
@@ -116,8 +91,10 @@ app.use("/loans", loans_1.default);
 app.use("/repayments", repayments_1.default);
 app.use("/reports", reports_1.default);
 app.use("/api/notifications", notifications_1.default);
-app.use("/router", router_1.default); // use renamed import
-// Protected routes
+app.use("/router", router_1.default); // make sure ./routes/router.ts exists
+// -----------------------------
+// Protected Routes
+// -----------------------------
 app.get("/dashboard", authMiddleware_1.verifyToken, (req, res) => {
     res.json({ message: "Welcome to the protected dashboard", user: req.user });
 });
@@ -130,6 +107,8 @@ app.get("/staff", authMiddleware_1.verifyToken, (0, roleMiddleware_1.verifyRole)
 app.get("/member", authMiddleware_1.verifyToken, (0, roleMiddleware_1.verifyRole)(["member"]), (req, res) => {
     res.json({ message: "Welcome Member 🙋", user: req.user });
 });
+// -----------------------------
 // Global Error Handler
+// -----------------------------
 app.use(errorHandler_1.errorHandler);
 exports.default = app;

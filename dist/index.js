@@ -6,11 +6,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.notifyUser = void 0;
 const http_1 = require("http");
 const socket_io_1 = require("socket.io");
-const app_1 = __importDefault(require("./app")); // relative import — fixed
+const app_1 = __importDefault(require("./app")); // relative import — important for deployment
 const PORT = process.env.PORT || 8080;
-// create HTTP server
+// Create HTTP server
 const httpServer = (0, http_1.createServer)(app_1.default);
-// Socket.IO setup
+// -----------------------------
+// Socket.IO Setup
+// -----------------------------
 const io = new socket_io_1.Server(httpServer, {
     cors: {
         origin: [
@@ -19,6 +21,7 @@ const io = new socket_io_1.Server(httpServer, {
             "https://mims-dashboard.vercel.app", // Production frontend
         ],
         methods: ["GET", "POST", "PUT", "DELETE"],
+        credentials: true,
     },
 });
 const onlineUsers = new Map();
