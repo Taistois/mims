@@ -7,14 +7,8 @@
     "strict": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "baseUrl": "./src",
-    "paths": {
-      "@app": ["app"],                // for app.ts
-      "@routes/*": ["routes/*"],      // for all routes
-      "@middleware/*": ["middleware/*"] // for all middleware
-    }
+    "skipLibCheck": true
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }
