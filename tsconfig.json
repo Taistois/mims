@@ -9,8 +9,8 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
-    "ignoreDeprecations": "6.0"
+    "moduleResolution": "bundler",
+    "ignoreDeprecations": "6.0",
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
