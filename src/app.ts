@@ -1,4 +1,4 @@
-import express from "express";
+import * as express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import helmet from "helmet";
@@ -23,7 +23,7 @@ import notificationRoutes from "./routes/notifications";
 
 dotenv.config({ path: ".env" });
 
-const app = express();
+const app = express.default();
 
 // -----------------------------
 // Security & Middleware
