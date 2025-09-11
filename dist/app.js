@@ -20,7 +20,6 @@ const loans_1 = __importDefault(require("./routes/loans"));
 const repayments_1 = __importDefault(require("./routes/repayments"));
 const reports_1 = __importDefault(require("./routes/reports"));
 const notifications_1 = __importDefault(require("./routes/notifications"));
-const router_1 = __importDefault(require("./routes/router")); // make sure this file is ./routes/router.ts
 // Middleware
 const authMiddleware_1 = require("./middleware/authMiddleware");
 const roleMiddleware_1 = require("./middleware/roleMiddleware");
@@ -91,7 +90,6 @@ app.use("/loans", loans_1.default);
 app.use("/repayments", repayments_1.default);
 app.use("/reports", reports_1.default);
 app.use("/api/notifications", notifications_1.default);
-app.use("/router", router_1.default); // make sure ./routes/router.ts exists
 // -----------------------------
 // Protected Routes
 // -----------------------------
