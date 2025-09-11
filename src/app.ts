@@ -99,7 +99,7 @@ app.use("/repayments", repaymentRoutes);
 app.use("/reports", reportRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use(express.json());
-app.use('/api', router);
+app.use('/router', router);
 // -----------------------------
 // Protected Testing Routes
 // -----------------------------
