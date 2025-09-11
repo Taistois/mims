@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "nodemon --watch src --exec ts-node src/index.ts",
     "build": "npx tsc",
-    "start": "node dist/index.js",
+    "start": "node -r tsconfig-paths/register dist/index.js",
     "test": "jest --detectOpenHandles --forceExit --runInBand",
     "clean": "rimraf dist"
   },
@@ -27,7 +27,8 @@
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "tsconfig-paths": "^4.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.28.3",
