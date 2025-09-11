@@ -16,7 +16,7 @@ import loanRoutes from "./routes/loans";
 import repaymentRoutes from "./routes/repayments";
 import reportRoutes from "./routes/reports";
 import notificationRoutes from "./routes/notifications";
-import router from "./routes/router"; // make sure this file is ./routes/router.ts
+
 
 // Middleware
 import { verifyToken } from "./middleware/authMiddleware";
@@ -99,7 +99,6 @@ app.use("/loans", loanRoutes);
 app.use("/repayments", repaymentRoutes);
 app.use("/reports", reportRoutes);
 app.use("/api/notifications", notificationRoutes);
-app.use("/router", router); // make sure ./routes/router.ts exists
 
 // -----------------------------
 // Protected Routes
