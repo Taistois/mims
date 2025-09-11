@@ -20,6 +20,7 @@ import loanRoutes from "./routes/loans";
 import repaymentRoutes from "./routes/repayments";
 import reportRoutes from "./routes/reports";
 import notificationRoutes from "./routes/notifications";
+import router from './routes/router';
 
 dotenv.config({ path: ".env" });
 
@@ -97,7 +98,8 @@ app.use("/loans", loanRoutes);
 app.use("/repayments", repaymentRoutes);
 app.use("/reports", reportRoutes);
 app.use("/api/notifications", notificationRoutes);
-
+app.use(express.json());
+app.use('/api', router);
 // -----------------------------
 // Protected Testing Routes
 // -----------------------------
