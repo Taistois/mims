@@ -6,10 +6,6 @@ import rateLimit from "express-rate-limit";
 import swaggerUi from "swagger-ui-express";
 import swaggerJsDoc from "swagger-jsdoc";
 
-import { verifyToken } from "./middleware/authMiddleware";
-import { verifyRole } from "./middleware/roleMiddleware";
-import { errorHandler } from "./middleware/errorHandler";
-
 // Routes
 import authRoutes from "./routes/auth";
 import memberRoutes from "./routes/members";
@@ -20,7 +16,13 @@ import loanRoutes from "./routes/loans";
 import repaymentRoutes from "./routes/repayments";
 import reportRoutes from "./routes/reports";
 import notificationRoutes from "./routes/notifications";
-import router from "@routes/router"; // renamed import to avoid confusion
+import router from "./routes/router";
+
+// Middleware
+import { verifyToken } from "./middleware/authMiddleware";
+import { verifyRole } from "./middleware/roleMiddleware";
+import { errorHandler } from "./middleware/errorHandler";
+
 
 dotenv.config({ path: ".env" });
 

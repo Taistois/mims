@@ -6,13 +6,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.notifyUser = void 0;
 const http_1 = require("http");
 const socket_io_1 = require("socket.io");
-const app_1 = __importDefault(require("./app"));
+const app_1 = __importDefault(require("./app")); // relative import — fixed
 const PORT = process.env.PORT || 8080;
-// Create HTTP server
+// create HTTP server
 const httpServer = (0, http_1.createServer)(app_1.default);
-// -----------------------------
-// Socket.IO Setup
-// -----------------------------
+// Socket.IO setup
 const io = new socket_io_1.Server(httpServer, {
     cors: {
         origin: [
@@ -40,7 +38,9 @@ io.on("connection", (socket) => {
         }
     });
 });
+// -----------------------------
 // Utility to send notifications
+// -----------------------------
 const notifyUser = (userId, notification) => {
     const socketId = onlineUsers.get(userId);
     if (socketId) {

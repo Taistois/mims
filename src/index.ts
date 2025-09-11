@@ -1,20 +1,13 @@
 import { createServer } from "http";
 import { Server } from "socket.io";
-import app from "@app"; // absolute import (app.ts)
+import app from "./app"; // relative import — fixed
 
-// -----------------------------
-// Environment & Port
-// -----------------------------
 const PORT = process.env.PORT || 8080;
 
-// -----------------------------
-// Create HTTP server
-// -----------------------------
+// create HTTP server
 const httpServer = createServer(app);
 
-// -----------------------------
-// Socket.IO Setup
-// -----------------------------
+// Socket.IO setup
 const io = new Server(httpServer, {
   cors: {
     origin: [

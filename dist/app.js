@@ -43,9 +43,6 @@ const helmet_1 = __importDefault(require("helmet"));
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
 const swagger_jsdoc_1 = __importDefault(require("swagger-jsdoc"));
-const authMiddleware_1 = require("./middleware/authMiddleware");
-const roleMiddleware_1 = require("./middleware/roleMiddleware");
-const errorHandler_1 = require("./middleware/errorHandler");
 // Routes
 const auth_1 = __importDefault(require("./routes/auth"));
 const members_1 = __importDefault(require("./routes/members"));
@@ -57,11 +54,13 @@ const repayments_1 = __importDefault(require("./routes/repayments"));
 const reports_1 = __importDefault(require("./routes/reports"));
 const notifications_1 = __importDefault(require("./routes/notifications"));
 const router_1 = __importDefault(require("./routes/router"));
+// Middleware
+const authMiddleware_1 = require("./middleware/authMiddleware");
+const roleMiddleware_1 = require("./middleware/roleMiddleware");
+const errorHandler_1 = require("./middleware/errorHandler");
 dotenv_1.default.config({ path: ".env" });
 const app = express.default();
-// -----------------------------
-// Security & Middleware
-// -----------------------------
+// Middleware
 app.use(express.json());
 app.use((0, helmet_1.default)());
 // CORS configuration
@@ -83,15 +82,13 @@ app.use((0, cors_1.default)({
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
 }));
-// Rate limiter (15 min, 100 requests per IP)
+// Rate limiter
 const apiLimiter = (0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000,
     max: 100,
     message: "Too many requests from this IP, please try again later.",
 });
-// -----------------------------
 // Swagger Setup
-// -----------------------------
 const swaggerOptions = {
     definition: {
         openapi: "3.0.0",
@@ -105,16 +102,12 @@ const swaggerOptions = {
 };
 const swaggerDocs = (0, swagger_jsdoc_1.default)(swaggerOptions);
 app.use("/api-docs", swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(swaggerDocs));
-// -----------------------------
-// Root Health Check
-// -----------------------------
+// Health Check
 app.get("/", (req, res) => {
     res.status(200).send("🚀 MIMS Backend Running Successfully!");
 });
-// -----------------------------
 // Main Routes
-// -----------------------------
-app.use("/auth", apiLimiter, auth_1.default); // ✅ with rate limiter
+app.use("/auth", apiLimiter, auth_1.default);
 app.use("/members", members_1.default);
 app.use("/policies", policies_1.default);
 app.use("/claims", claims_1.default);
@@ -123,16 +116,10 @@ app.use("/loans", loans_1.default);
 app.use("/repayments", repayments_1.default);
 app.use("/reports", reports_1.default);
 app.use("/api/notifications", notifications_1.default);
-app.use(express.json());
-app.use('/router', router_1.default);
-// -----------------------------
-// Protected Testing Routes
-// -----------------------------
+app.use("/router", router_1.default); // use renamed import
+// Protected routes
 app.get("/dashboard", authMiddleware_1.verifyToken, (req, res) => {
-    res.json({
-        message: "Welcome to the protected dashboard",
-        user: req.user,
-    });
+    res.json({ message: "Welcome to the protected dashboard", user: req.user });
 });
 app.get("/admin", authMiddleware_1.verifyToken, (0, roleMiddleware_1.verifyRole)(["admin"]), (req, res) => {
     res.json({ message: "Welcome Admin 👑", user: req.user });
@@ -143,8 +130,6 @@ app.get("/staff", authMiddleware_1.verifyToken, (0, roleMiddleware_1.verifyRole)
 app.get("/member", authMiddleware_1.verifyToken, (0, roleMiddleware_1.verifyRole)(["member"]), (req, res) => {
     res.json({ message: "Welcome Member 🙋", user: req.user });
 });
-// -----------------------------
 // Global Error Handler
-// -----------------------------
 app.use(errorHandler_1.errorHandler);
 exports.default = app;
