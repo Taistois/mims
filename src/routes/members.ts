@@ -1,141 +1,75 @@
 import { Router } from "express";
 import pool from "../config/db";
-import { verifyToken, authorizeRoles } from "../middleware/authMiddleware";
 
 const router = Router();
 
-/**
- * ===========================================
- * ADD NEW MEMBER
- * ===========================================
- * Roles Allowed: insurance_staff, admin
- */
-router.post("/", verifyToken, authorizeRoles("insurance_staff", "admin"), async (req, res) => {
-  const { user_id, national_id, address, date_of_birth } = req.body;
-
+// ✅ Create a new member
+router.post("/", async (req, res) => {
   try {
+    const { name, email, phone } = req.body;
+
     const result = await pool.query(
-      `INSERT INTO members (user_id, national_id, address, date_of_birth)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [user_id, national_id, address, date_of_birth]
+      "INSERT INTO members (name, email, phone) VALUES ($1, $2, $3) RETURNING *",
+      [name, email, phone]
     );
-    res.json({ message: "Member registered ✅", member: result.rows[0] });
-  } catch (err) {
-    console.error("Member Register Error:", err);
-    res.status(500).json({ error: "Failed to register member ❌" });
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error("Error creating member:", error);
+    res.status(500).json({ error: "Failed to create member" });
   }
 });
 
-/**
- * ===========================================
- * GET ALL MEMBERS
- * ===========================================
- * Roles Allowed: insurance_staff, admin
- */
-router.get("/", verifyToken, authorizeRoles("insurance_staff", "admin"), async (req, res) => {
+// ✅ Get all members
+router.get("/", async (_req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT m.*, u.name, u.email, u.phone, u.role 
-       FROM members m 
-       JOIN users u ON m.user_id = u.user_id`
-    );
+    const result = await pool.query("SELECT * FROM members ORDER BY created_at DESC");
     res.json(result.rows);
-  } catch (err) {
-    console.error("Fetch Members Error:", err);
-    res.status(500).json({ error: "Failed to fetch members ❌" });
+  } catch (error) {
+    console.error("Error fetching members:", error);
+    res.status(500).json({ error: "Failed to fetch members" });
   }
 });
 
-/**
- * ===========================================
- * GET SINGLE MEMBER BY ID
- * ===========================================
- * - Staff/Admin can view any member
- * - Members can only view their own record
- */
-router.get("/:id", verifyToken, async (req, res) => {
-  const memberId = req.params.id;
-  const user = (req as any).user;
-
+// ✅ Get single member
+router.get("/:id", async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT m.*, u.name, u.email, u.phone, u.role 
-       FROM members m 
-       JOIN users u ON m.user_id = u.user_id
-       WHERE m.member_id = $1`,
-      [memberId]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Member not found ❌" });
-    }
-
-    const member = result.rows[0];
-
-    // Restrict members to only view their own data
-    if (user.role === "member" && member.user_id !== user.user_id) {
-      return res.status(403).json({ error: "Forbidden: Cannot view other member’s data 🚫" });
-    }
-
-    res.json(member);
-  } catch (err) {
-    console.error("Fetch Member Error:", err);
-    res.status(500).json({ error: "Failed to fetch member ❌" });
+    const result = await pool.query("SELECT * FROM members WHERE id = $1", [req.params.id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: "Member not found" });
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Error fetching member:", error);
+    res.status(500).json({ error: "Failed to fetch member" });
   }
 });
 
-/**
- * ===========================================
- * UPDATE MEMBER
- * ===========================================
- * Roles Allowed: insurance_staff, admin
- */
-router.put("/:id", verifyToken, authorizeRoles("insurance_staff", "admin"), async (req, res) => {
-  const memberId = req.params.id;
-  const { address, date_of_birth } = req.body;
-
+// ✅ Update member
+router.put("/:id", async (req, res) => {
   try {
+    const { name, email, phone } = req.body;
     const result = await pool.query(
-      `UPDATE members 
-       SET address=$1, date_of_birth=$2 
-       WHERE member_id=$3 RETURNING *`,
-      [address, date_of_birth, memberId]
+      "UPDATE members SET name = $1, email = $2, phone = $3 WHERE id = $4 RETURNING *",
+      [name, email, phone, req.params.id]
     );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Member not found ❌" });
-    }
-
-    res.json({ message: "Member updated ✅", member: result.rows[0] });
-  } catch (err) {
-    console.error("Update Member Error:", err);
-    res.status(500).json({ error: "Failed to update member ❌" });
+    if (result.rows.length === 0) return res.status(404).json({ error: "Member not found" });
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Error updating member:", error);
+    res.status(500).json({ error: "Failed to update member" });
   }
 });
 
-/**
- * ===========================================
- * DELETE MEMBER
- * ===========================================
- * Roles Allowed: admin only
- */
-router.delete("/:id", verifyToken, authorizeRoles("admin"), async (req, res) => {
-  const memberId = req.params.id;
-
+// ✅ Delete member
+router.delete("/:id", async (req, res) => {
   try {
-    const result = await pool.query(
-      `DELETE FROM members WHERE member_id=$1 RETURNING *`,
-      [memberId]
-    );
+    const result = await pool.query("DELETE FROM members WHERE id = $1 RETURNING *", [req.params.id]);
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Member not found ❌" });
-    }
-
-    res.json({ message: "Member deleted ✅" });
-  } catch (err) {
-    console.error("Delete Member Error:", err);
-    res.status(500).json({ error: "Failed to delete member ❌" });
+    if (result.rows.length === 0) return res.status(404).json({ error: "Member not found" });
+    res.json({ message: "Member deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting member:", error);
+    res.status(500).json({ error: "Failed to delete member" });
   }
 });
 
