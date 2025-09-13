@@ -6,11 +6,12 @@ const router = Router();
 // ✅ Create a new member
 router.post("/", async (req, res) => {
   try {
-    const { name, email, phone } = req.body;
+    const { member_type, national_id, address, date_of_birth } = req.body;
 
     const result = await pool.query(
-      "INSERT INTO members (name, email, phone) VALUES ($1, $2, $3) RETURNING *",
-      [name, email, phone]
+      `INSERT INTO members (member_type, national_id, address, date_of_birth)
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [member_type, national_id, address, date_of_birth]
     );
 
     res.status(201).json(result.rows[0]);
@@ -34,7 +35,7 @@ router.get("/", async (_req, res) => {
 // ✅ Get single member
 router.get("/:id", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM members WHERE id = $1", [req.params.id]);
+    const result = await pool.query("SELECT * FROM members WHERE member_id = $1", [req.params.id]);
     if (result.rows.length === 0) return res.status(404).json({ error: "Member not found" });
     res.json(result.rows[0]);
   } catch (error) {
@@ -46,10 +47,12 @@ router.get("/:id", async (req, res) => {
 // ✅ Update member
 router.put("/:id", async (req, res) => {
   try {
-    const { name, email, phone } = req.body;
+    const { member_type, national_id, address, date_of_birth } = req.body;
+
     const result = await pool.query(
-      "UPDATE members SET name = $1, email = $2, phone = $3 WHERE id = $4 RETURNING *",
-      [name, email, phone, req.params.id]
+      `UPDATE members SET member_type = $1, national_id = $2, address = $3, date_of_birth = $4
+       WHERE member_id = $5 RETURNING *`,
+      [member_type, national_id, address, date_of_birth, req.params.id]
     );
 
     if (result.rows.length === 0) return res.status(404).json({ error: "Member not found" });
@@ -63,7 +66,7 @@ router.put("/:id", async (req, res) => {
 // ✅ Delete member
 router.delete("/:id", async (req, res) => {
   try {
-    const result = await pool.query("DELETE FROM members WHERE id = $1 RETURNING *", [req.params.id]);
+    const result = await pool.query("DELETE FROM members WHERE member_id = $1 RETURNING *", [req.params.id]);
 
     if (result.rows.length === 0) return res.status(404).json({ error: "Member not found" });
     res.json({ message: "Member deleted successfully" });
