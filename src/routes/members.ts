@@ -23,7 +23,7 @@ router.post("/", async (req, res) => {
 // ✅ Get all members
 router.get("/", async (_req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM members ORDER BY created_at DESC");
+    const result = await pool.query("SELECT * FROM members ORDER BY registration_date DESC");
     res.json(result.rows);
   } catch (error) {
     console.error("Error fetching members:", error);
