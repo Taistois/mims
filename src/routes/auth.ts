@@ -88,6 +88,7 @@ router.post("/login", async (req: Request, res: Response) => {
       { expiresIn: "2h" } // token valid for 2 hours
     );
 
+    // ✅ Return full user object including role
     res.json({
       message: "Login successful ✅",
       token,
@@ -96,7 +97,7 @@ router.post("/login", async (req: Request, res: Response) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        role: user.role,
+        role: user.role, // ✅ Important for frontend role-based access
       },
     });
   } catch (err) {
@@ -110,7 +111,7 @@ router.post("/login", async (req: Request, res: Response) => {
  * GET ALL USERS (Admin Only)
  * ================================
  */
-router.get("/users", verifyToken, authorizeRoles("admin"), async (req: Request, res: Response) => {
+router.get("/users", verifyToken, authorizeRoles("admin"), async (_req: Request, res: Response) => {
   try {
     const result = await pool.query(
       "SELECT user_id, name, email, phone, role, created_at FROM users ORDER BY created_at DESC"
