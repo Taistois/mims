@@ -25,7 +25,7 @@ router.post(
         [member_id, policy_type, premium_amount, coverage_amount, start_date, end_date]
       );
 
-      res.json({ message: "Policy created ✅", policy: result.rows[0] });
+      res.status(201).json({ message: "Policy created ✅", policy: result.rows[0] });
     } catch (err) {
       console.error("Policy Create Error:", err);
       res.status(500).json({ error: "Failed to create policy ❌" });
@@ -37,25 +37,29 @@ router.post(
  * ===========================================
  * GET ALL POLICIES
  * ===========================================
- * - Admin and staff can view ALL policies
- * - Members only see their own
+ * Admin & insurance_staff can view all
+ * Members only see their own policies
  */
 router.get("/", verifyToken, async (req, res) => {
   const user = (req as any).user;
 
   try {
-    let query = `SELECT p.*, u.name, u.email, u.phone
-                 FROM policies p
-                 JOIN members m ON p.member_id = m.member_id
-                 JOIN users u ON m.user_id = u.user_id`;
+    let query = `
+      SELECT p.*, u.name, u.email, u.phone
+      FROM policies p
+      JOIN members m ON p.member_id = m.member_id
+      JOIN users u ON m.user_id = u.user_id
+    `;
     let params: any[] = [];
 
+    // Restrict members to only their policies
     if (user.role === "member") {
       query += ` WHERE m.user_id = $1`;
-      params = [user.user_id];
+      params.push(user.user_id);
     }
 
-    query += ` ORDER BY u.created_at DESC`;
+    // No created_at, so ordering by policy_id
+    query += ` ORDER BY p.policy_id DESC`;
 
     const result = await pool.query(query, params);
     res.json(result.rows);
@@ -69,18 +73,19 @@ router.get("/", verifyToken, async (req, res) => {
  * ===========================================
  * GET SINGLE POLICY
  * ===========================================
- * - Members can only view their own policy
  */
 router.get("/:id", verifyToken, async (req, res) => {
   const { id } = req.params;
   const user = (req as any).user;
 
   try {
-    let query = `SELECT p.*, u.name, u.email, u.phone
-                 FROM policies p
-                 JOIN members m ON p.member_id = m.member_id
-                 JOIN users u ON m.user_id = u.user_id
-                 WHERE p.policy_id = $1`;
+    let query = `
+      SELECT p.*, u.name, u.email, u.phone
+      FROM policies p
+      JOIN members m ON p.member_id = m.member_id
+      JOIN users u ON m.user_id = u.user_id
+      WHERE p.policy_id = $1
+    `;
     let params: any[] = [id];
 
     if (user.role === "member") {
@@ -90,8 +95,9 @@ router.get("/:id", verifyToken, async (req, res) => {
 
     const result = await pool.query(query, params);
 
-    if (result.rows.length === 0)
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: "Policy not found ❌" });
+    }
 
     res.json(result.rows[0]);
   } catch (err) {
@@ -123,8 +129,9 @@ router.put(
         [policy_type, premium_amount, coverage_amount, start_date, end_date, status, id]
       );
 
-      if (result.rows.length === 0)
+      if (result.rows.length === 0) {
         return res.status(404).json({ error: "Policy not found ❌" });
+      }
 
       res.json({ message: "Policy updated ✅", policy: result.rows[0] });
     } catch (err) {
@@ -136,7 +143,7 @@ router.put(
 
 /**
  * ===========================================
- * DELETE (CANCEL) POLICY
+ * DELETE POLICY
  * ===========================================
  * Admin only
  */
@@ -144,10 +151,14 @@ router.delete("/:id", verifyToken, authorizeRoles("admin"), async (req, res) => 
   const { id } = req.params;
 
   try {
-    const result = await pool.query("DELETE FROM policies WHERE policy_id = $1 RETURNING *", [id]);
+    const result = await pool.query(
+      "DELETE FROM policies WHERE policy_id = $1 RETURNING *",
+      [id]
+    );
 
-    if (result.rows.length === 0)
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: "Policy not found ❌" });
+    }
 
     res.json({ message: "Policy cancelled ✅", policy: result.rows[0] });
   } catch (err) {
