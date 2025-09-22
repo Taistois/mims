@@ -65,6 +65,7 @@ router.post(
  */
 router.get("/", verifyToken, async (req, res) => {
   const user = (req as any).user;
+  console.log("Authenticated User:", user); // DEBUG
 
   try {
     let query = `
@@ -76,6 +77,7 @@ router.get("/", verifyToken, async (req, res) => {
     `;
     const params: any[] = [];
 
+    // ✅ Only filter for members
     if (user.role === "member") {
       query += ` WHERE m.user_id = $1`;
       params.push(user.user_id);
@@ -84,6 +86,8 @@ router.get("/", verifyToken, async (req, res) => {
     query += ` ORDER BY c.submitted_at DESC`;
 
     const result = await pool.query(query, params);
+
+    console.log("Fetched Claims:", result.rows); // DEBUG
     res.json(result.rows);
   } catch (err) {
     console.error("Fetch Claims Error:", err);
